@@ -1,5 +1,3 @@
-// Layout manager implementation
-
 #include "layout_manager.h"
 #include "imgui.h"
 
@@ -56,6 +54,9 @@ namespace pm
 		case layout_mode::pop_out:
 			render_pop_out( );
 			break;
+		case layout_mode::stick:
+			render_stick( );
+			break;
 		}
 	}
 
@@ -70,6 +71,9 @@ namespace pm
 			}
 			if ( ImGui::MenuItem( "Pop-Out Windows", nullptr, mode_ == layout_mode::pop_out ) ) {
 				mode_ = layout_mode::pop_out;
+			}
+			if ( ImGui::MenuItem( "Stick (Toolbar)", nullptr, mode_ == layout_mode::stick ) ) {
+				mode_ = layout_mode::stick;
 			}
 			ImGui::Separator( );
 
@@ -182,6 +186,50 @@ namespace pm
 			meter->render( );
 			ImGui::End( );
 		}
+	}
+
+	void layout_manager::render_stick( )
+	{
+		ImGuiViewport* viewport = ImGui::GetMainViewport( );
+
+		// stick mode: thin toolbar docked at top, always visible
+		float menu_height = ImGui::GetFrameHeight( );
+
+		ImGui::SetNextWindowPos( ImVec2( viewport->Pos.x, viewport->Pos.y + menu_height ) );
+		ImGui::SetNextWindowSize( ImVec2( viewport->Size.x, stick_height_ ) );
+
+		ImGui::Begin( "##StickToolbar", nullptr,
+		              ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+		                  ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNav );
+
+		// count visible meters
+		int visible_count = 0;
+		for ( const auto& m : meters_ ) {
+			if ( m->is_visible( ) )
+				visible_count++;
+		}
+
+		if ( visible_count > 0 ) {
+			float meter_width    = ( ImGui::GetContentRegionAvail( ).x - ( visible_count - 1 ) * 2.0f ) / visible_count;
+			float content_height = ImGui::GetContentRegionAvail( ).y;
+
+			int i = 0;
+			for ( auto& meter : meters_ ) {
+				if ( !meter->is_visible( ) )
+					continue;
+
+				if ( i > 0 )
+					ImGui::SameLine( 0, 2.0f );
+
+				ImGui::BeginChild( meter->get_name( ), ImVec2( meter_width, content_height ), false );
+				meter->render( );
+				ImGui::EndChild( );
+
+				i++;
+			}
+		}
+
+		ImGui::End( );
 	}
 
 } // namespace pm

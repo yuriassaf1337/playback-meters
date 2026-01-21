@@ -10,7 +10,8 @@ namespace pm
 	enum class layout_mode {
 		horizontal_bar, // toolbar-like strip for compact monitoring
 		quad,           // 2x2 grid layout
-		pop_out         // freeform arrangement of individual meters
+		pop_out,        // freeform arrangement of individual meters
+		stick           // docked toolbar at top of screen (always on top)
 	};
 
 	class layout_manager
@@ -27,6 +28,16 @@ namespace pm
 		layout_mode get_mode( ) const
 		{
 			return mode_;
+		}
+
+		// stick mode settings
+		void set_stick_height( float height )
+		{
+			stick_height_ = height;
+		}
+		float get_stick_height( ) const
+		{
+			return stick_height_;
 		}
 
 		// meter management
@@ -55,10 +66,12 @@ namespace pm
 	private:
 		layout_mode mode_ = layout_mode::quad;
 		std::vector< std::shared_ptr< meter_panel > > meters_;
+		float stick_height_ = 80.0f;
 
 		void render_horizontal_bar( );
 		void render_quad( );
 		void render_pop_out( );
+		void render_stick( );
 	};
 
 } // namespace pm
